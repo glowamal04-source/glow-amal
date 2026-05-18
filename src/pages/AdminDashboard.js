@@ -14,6 +14,7 @@ import { db } from '../firebase';
 import Swal from 'sweetalert2';
 
 const initialForm = {
+  type: 'product',
   title: '',
   description: '',
   price: '',
@@ -69,6 +70,7 @@ function AdminDashboard() {
         : [];
 
       const payload = {
+        type: form.type === 'pack' ? 'pack' : 'product',
         title: form.title.trim(),
         description: form.description.trim(),
         price: Number(form.price),
@@ -79,8 +81,7 @@ function AdminDashboard() {
       };
 
       if (editingId) {
-        const refDoc = doc(db, 'products', editingId);
-        await updateDoc(refDoc, payload);
+        await updateDoc(doc(db, 'products', editingId), payload);
       } else {
         await addDoc(collection(db, 'products'), {
           ...payload,
@@ -94,8 +95,8 @@ function AdminDashboard() {
 
       await Swal.fire({
         icon: 'success',
-        title: 'Produit enregistré',
-        text: 'تم حفظ المنتج بنجاح',
+        title: 'Article enregistré',
+        text: 'Le produit ou pack a été sauvegardé avec succès.',
         confirmButtonColor: '#b76e79'
       });
     } catch (error) {
@@ -115,6 +116,7 @@ function AdminDashboard() {
   const handleEdit = (product) => {
     setEditingId(product.id);
     setForm({
+      type: product.type === 'pack' ? 'pack' : 'product',
       title: product.title || '',
       description: product.description || '',
       price: product.price || '',
@@ -127,14 +129,14 @@ function AdminDashboard() {
 
   const handleDelete = async (productId) => {
     const result = await Swal.fire({
-      title: 'Supprimer ce produit ?',
-      text: 'هاد العملية نهائية',
+      title: 'Supprimer cet article ?',
+      text: 'Cette action est définitive.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#b76e79',
       cancelButtonColor: '#aaa',
-      confirmButtonText: 'نعم حذف',
-      cancelButtonText: 'إلغاء'
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
     });
 
     if (result.isConfirmed) {
@@ -144,8 +146,8 @@ function AdminDashboard() {
 
         await Swal.fire({
           icon: 'success',
-          title: 'تم الحذف',
-          text: 'تم حذف المنتج بنجاح',
+          title: 'Article supprimé',
+          text: 'La suppression a été effectuée avec succès.',
           confirmButtonColor: '#b76e79'
         });
       } catch (error) {
@@ -188,13 +190,13 @@ function AdminDashboard() {
   const handleDeleteOrder = async (orderId) => {
     const result = await Swal.fire({
       title: 'Supprimer la commande ?',
-      text: 'هاد الطلب غادي يتمسح نهائيا',
+      text: 'Cette commande sera supprimée définitivement.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#b76e79',
       cancelButtonColor: '#aaa',
-      confirmButtonText: 'نعم حذف',
-      cancelButtonText: 'إلغاء'
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
     });
 
     if (result.isConfirmed) {
@@ -205,7 +207,7 @@ function AdminDashboard() {
         await Swal.fire({
           icon: 'success',
           title: 'Commande supprimée',
-          text: 'تم حذف الطلب بنجاح',
+          text: 'La commande a été supprimée avec succès.',
           confirmButtonColor: '#b76e79'
         });
       } catch (error) {
@@ -241,11 +243,7 @@ function AdminDashboard() {
           </div>
 
           <div className="admin-top-actions">
-            <button
-              type="button"
-              className="orders-shortcut-btn"
-              onClick={scrollToOrders}
-            >
+            <button type="button" className="orders-shortcut-btn" onClick={scrollToOrders}>
               Aller aux commandes
             </button>
           </div>
@@ -253,49 +251,39 @@ function AdminDashboard() {
 
         <div className="admin-grid">
           <form className="admin-form" onSubmit={handleSubmit}>
-            <h2>{editingId ? 'Modifier produit' : 'Ajouter produit'}</h2>
+            <h2>
+              {editingId
+                ? `Modifier ${form.type === 'pack' ? 'pack' : 'produit'}`
+                : `Ajouter ${form.type === 'pack' ? 'pack' : 'produit'}`}
+            </h2>
+
+            <div className="form-group">
+              <label>Type d'article</label>
+              <select name="type" value={form.type} onChange={handleChange}>
+                <option value="product">Produit</option>
+                <option value="pack">Pack</option>
+              </select>
+            </div>
 
             <div className="form-group">
               <label>Titre</label>
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                required
-              />
+              <input name="title" value={form.title} onChange={handleChange} required />
             </div>
 
             <div className="form-group">
               <label>Description</label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                required
-              />
+              <textarea name="description" value={form.description} onChange={handleChange} required />
             </div>
 
             <div className="double-grid">
               <div className="form-group">
                 <label>Prix</label>
-                <input
-                  type="number"
-                  name="price"
-                  value={form.price}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="number" name="price" value={form.price} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>Stock</label>
-                <input
-                  type="number"
-                  name="stock"
-                  value={form.stock}
-                  onChange={handleChange}
-                  required
-                />
+                <input type="number" name="stock" value={form.stock} onChange={handleChange} required />
               </div>
             </div>
 
@@ -317,24 +305,27 @@ function AdminDashboard() {
                 checked={form.featured}
                 onChange={handleChange}
               />
-              Produit mis en avant
+              Produit ou pack mis en avant
             </label>
 
             <button type="submit" className="primary-btn" disabled={loading}>
-              {loading ? 'Enregistrement...' : editingId ? 'Mettre à jour' : 'Ajouter produit'}
+              {loading ? 'Enregistrement...' : editingId ? 'Mettre à jour' : 'Ajouter article'}
             </button>
           </form>
 
           <div className="admin-panel">
-            <h2>Produits</h2>
+            <h2>Produits et packs</h2>
             <div className="admin-list">
               {products.length === 0 ? (
-                <p>Aucun produit trouvé.</p>
+                <p>Aucun article trouvé.</p>
               ) : (
                 products.map((product) => (
                   <div className="admin-item" key={product.id}>
                     <div>
                       <strong>{product.title}</strong>
+                      <span className={`admin-type-badge ${product.type === 'pack' ? 'pack' : ''}`}>
+                        {product.type === 'pack' ? 'Pack' : 'Produit'}
+                      </span>
                       <p>{Number(product.price).toFixed(2)} DH - Stock: {product.stock}</p>
                       {product.images && product.images.length > 0 && (
                         <img
@@ -352,19 +343,11 @@ function AdminDashboard() {
                     </div>
 
                     <div className="admin-actions">
-                      <button
-                        type="button"
-                        className="secondary-btn small-btn"
-                        onClick={() => handleEdit(product)}
-                      >
+                      <button type="button" className="secondary-btn small-btn" onClick={() => handleEdit(product)}>
                         Modifier
                       </button>
 
-                      <button
-                        type="button"
-                        className="danger-btn small-btn"
-                        onClick={() => handleDelete(product.id)}
-                      >
+                      <button type="button" className="danger-btn small-btn" onClick={() => handleDelete(product.id)}>
                         Supprimer
                       </button>
                     </div>
@@ -435,11 +418,7 @@ function AdminDashboard() {
                       Livrée
                     </button>
 
-                    <button
-                      type="button"
-                      className="danger-btn small-btn"
-                      onClick={() => handleDeleteOrder(order.id)}
-                    >
+                    <button type="button" className="danger-btn small-btn" onClick={() => handleDeleteOrder(order.id)}>
                       Supprimer
                     </button>
                   </div>

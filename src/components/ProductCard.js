@@ -6,11 +6,13 @@ function ProductCard({ product }) {
   const oldPrice = Number(product.oldPrice) || 0;
   const hasPromo = oldPrice > price;
   const discount = hasPromo ? Math.round(((oldPrice - price) / oldPrice) * 100) : null;
+  const isPack = product.type === 'pack';
 
   return (
     <div className="product-card sahar-product-card">
       <Link to={`/products/${product.id}`} className="sahar-product-image-link">
         {hasPromo && <span className="sahar-discount-badge">-{discount}%</span>}
+        {isPack && <span className="sahar-pack-badge">Pack</span>}
 
         <img
           src={product.images?.[0] || 'https://via.placeholder.com/700x900?text=Glow+AML'}
@@ -20,7 +22,7 @@ function ProductCard({ product }) {
       </Link>
 
       <div className="sahar-product-info">
-        <p className="sahar-product-brand">Gloow by Amal</p>
+        <p className="sahar-product-brand">{isPack ? 'Pack Glow by Amal' : 'Gloow by Amal'}</p>
         <h3>{product.title}</h3>
 
         <div className="sahar-price-row">

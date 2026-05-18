@@ -27,7 +27,7 @@ function ProductDetails() {
         await Swal.fire({
           icon: 'error',
           title: 'Erreur',
-          text: 'Impossible de charger ce produit.',
+          text: 'Impossible de charger cet article.',
           confirmButtonColor: '#b76e79'
         });
       } finally {
@@ -39,11 +39,12 @@ function ProductDetails() {
   }, [id]);
 
   if (loading) return <div className="page-center">Chargement...</div>;
-  if (!product) return <div className="page-center">Produit introuvable.</div>;
+  if (!product) return <div className="page-center">Article introuvable.</div>;
 
   const safeStock = Number(product.stock) || 0;
   const images = product.images || [];
   const hasMultipleImages = images.length > 1;
+  const isPack = product.type === 'pack';
 
   const goPrev = () => {
     setImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -58,7 +59,7 @@ function ProductDetails() {
       await Swal.fire({
         icon: 'warning',
         title: 'Rupture de stock',
-        text: 'Ce produit n’est plus disponible.',
+        text: isPack ? 'Ce pack n’est plus disponible.' : 'Ce produit n’est plus disponible.',
         confirmButtonColor: '#b76e79'
       });
       return;
@@ -69,8 +70,8 @@ function ProductDetails() {
 
     await Swal.fire({
       icon: 'success',
-      title: 'Produit ajouté',
-      text: 'Le produit a été ajouté au panier.',
+      title: isPack ? 'Pack ajouté' : 'Produit ajouté',
+      text: isPack ? 'Le pack a été ajouté au panier.' : 'Le produit a été ajouté au panier.',
       confirmButtonColor: '#b76e79',
       timer: 1400,
       showConfirmButton: false
@@ -118,7 +119,7 @@ function ProductDetails() {
         </div>
 
         <div className="details-box product-details-info">
-          <p className="eyebrow">Produit</p>
+          <p className="eyebrow">{isPack ? 'Pack' : 'Produit'}</p>
           <h1>{product.title}</h1>
 
           <p className="details-price">{Number(product.price).toFixed(2)} DH</p>

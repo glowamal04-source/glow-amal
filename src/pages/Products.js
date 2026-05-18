@@ -4,13 +4,15 @@ import { Search } from 'lucide-react';
 import { db } from '../firebase';
 import ProductCard from '../components/ProductCard';
 
-function Products() {
+function Products({ typeFilter = 'all' }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
   const PRODUCTS_PER_PAGE = 20;
+  const isPacksPage = typeFilter === 'pack';
+  const isProductsPage = typeFilter === 'product';
 
   useEffect(() => {
     async function fetchProducts() {
@@ -25,10 +27,14 @@ function Products() {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) =>
-      product.title?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [products, search]);
+    return products.filter((product) => {
+      const normalizedType = product.type === 'pack' ? 'pack' : 'product';
+      const matchesType = typeFilter === 'all' || normalizedType === typeFilter;
+      const matchesSearch = product.title?.toLowerCase().includes(search.toLowerCase());
+
+      return matchesType && matchesSearch;
+    });
+  }, [products, search, typeFilter]);
 
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
 
@@ -42,23 +48,33 @@ function Products() {
     setPage(1);
   };
 
+  const title = isPacksPage ? 'Tous les packs' : isProductsPage ? 'Tous les produits' : 'Catalogue Glow';
+  const subtitle = isPacksPage
+    ? 'Des routines complètes, élégantes et pensées pour un glow harmonieux.'
+    : isProductsPage
+      ? 'Une sélection douce, féminine et raffinée pour votre routine glow.'
+      : 'Tous les produits et packs Glow by Amal réunis dans un seul espace.';
+  const placeholder = isPacksPage
+    ? 'Rechercher un pack...'
+    : isProductsPage
+      ? 'Rechercher un produit...'
+      : 'Rechercher produit ou pack...';
+
   return (
     <section className="section premium-products-page">
       <div className="container">
         <div className="page-top premium-page-top">
           <div>
-            <p className="eyebrow">Catalogue</p>
-            <h1>Tous les produits</h1>
-            <p className="catalogue-subtitle">
-              Une sélection douce, féminine et raffinée pour votre routine glow.
-            </p>
+            <p className="eyebrow">{isPacksPage ? 'Packs' : 'Catalogue'}</p>
+            <h1>{title}</h1>
+            <p className="catalogue-subtitle">{subtitle}</p>
           </div>
 
           <div className="premium-search-box">
             <Search size={18} />
             <input
               type="text"
-              placeholder="Rechercher un produit..."
+              placeholder={placeholder}
               value={search}
               onChange={handleSearch}
               className="search-input"
@@ -70,11 +86,15 @@ function Products() {
           <p>Chargement...</p>
         ) : (
           <>
-            <div className="products-grid premium-products-grid">
-              {paginatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {paginatedProducts.length ? (
+              <div className="products-grid premium-products-grid">
+                {paginatedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <p>Aucun article trouvé pour le moment.</p>
+            )}
 
             {totalPages > 1 && (
               <div className="pagination-premium">

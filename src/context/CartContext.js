@@ -37,6 +37,7 @@ export function CartProvider({ children }) {
         ...prev,
         {
           id: product.id,
+          type: product.type === 'pack' ? 'pack' : 'product',
           title: product.title,
           price: Number(product.price) || 0,
           image: product.images?.[0] || '',

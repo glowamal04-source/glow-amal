@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { House, ShoppingBag, Info, Store, MessageCircle } from 'lucide-react';
+import { House, Package, ShoppingBag, Info, Store, MessageCircle } from 'lucide-react';
 import logo from '../assets/amal-gloow-logo.jpeg';
 
 function Header({ cartCount = 0 }) {
@@ -23,7 +23,7 @@ function Header({ cartCount = 0 }) {
 </Link>
 
         <nav className="main-nav">
-          <Link to="/">
+          <Link to="/" className="home-nav-link" aria-label="Accueil">
             <House size={18} />
             <span>Accueil</span>
           </Link>
@@ -31,6 +31,11 @@ function Header({ cartCount = 0 }) {
           <Link to="/products">
             <Store size={18} />
             <span>Produits</span>
+          </Link>
+
+          <Link to="/packs">
+            <Package size={18} />
+            <span>Packs</span>
           </Link>
 
           <Link to="/avis" className="icon-only-link" aria-label="Avis">
