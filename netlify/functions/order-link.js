@@ -2,7 +2,7 @@ const crypto = require('crypto');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'glow-aml-store';
 const DATABASE_ID = '(default)';
-const ORDER_STATUSES = ['Nouvelle', 'Confirmee', 'Livree'];
+const ORDER_STATUSES = ['Nouvelle', 'Confirmée', 'Livrée'];
 
 const json = (statusCode, body) => ({
   statusCode,

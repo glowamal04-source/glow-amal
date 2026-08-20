@@ -1,32 +1,24 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
+import { useNavigate } from 'react-router-dom';
+
+const ADMIN_PASSWORD = 'Glow.Admin_1';
 
 function AdminGate() {
-  const location = useLocation();
-  const [email, setEmail] = useState(localStorage.getItem('admin_email') || '');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const redirectPath = new URLSearchParams(location.search).get('redirect') || '/admin';
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
     setMessage('');
 
-    try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      localStorage.setItem('admin_email', email.trim());
-      navigate(redirectPath, { replace: true });
-    } catch (error) {
-      console.error(error);
-      setMessage('Email ou mot de passe incorrect.');
+    if (password === ADMIN_PASSWORD) {
+      localStorage.setItem('admin_access', 'true');
+      navigate('/admin');
+      return;
     }
 
-    setLoading(false);
+    setMessage('Mot de passe incorrect.');
   };
 
   return (
@@ -35,16 +27,6 @@ function AdminGate() {
         <form className="auth-card" onSubmit={handleSubmit}>
           <p className="eyebrow">Espace administrateur</p>
           <h1>Connexion admin</h1>
-
-          <div className="form-group">
-            <label>Email admin</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
 
           <div className="form-group">
             <label>Mot de passe</label>
@@ -58,8 +40,8 @@ function AdminGate() {
 
           {message && <p className="admin-login-message">{message}</p>}
 
-          <button className="primary-btn" disabled={loading}>
-            {loading ? 'Connexion...' : 'Entrer'}
+          <button className="primary-btn">
+            Entrer
           </button>
         </form>
       </div>

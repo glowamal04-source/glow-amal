@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
-const statuses = ['Nouvelle', 'Confirmee', 'Livree'];
+const statuses = ['Nouvelle', 'Confirmée', 'Livrée'];
+const phoneHref = (phone) => `tel:${String(phone || '').replace(/[^\d+]/g, '')}`;
 
 function OrderLinkPage() {
   const location = useLocation();
@@ -108,7 +109,12 @@ function OrderLinkPage() {
           <p className="order-id-line">Commande: {order.id}</p>
 
           <div className="summary-box order-link-summary">
-            <p><strong>Telephone:</strong> {order.phone}</p>
+            <p>
+              <strong>Telephone:</strong>{' '}
+              <a className="phone-call-link" href={phoneHref(order.phone)}>
+                {order.phone}
+              </a>
+            </p>
             <p><strong>Ville:</strong> {order.city}</p>
             <p><strong>Adresse:</strong> {order.address}</p>
             <p><strong>Total:</strong> {Number(order.total || 0).toFixed(2)} DH</p>
@@ -125,6 +131,10 @@ function OrderLinkPage() {
           </ul>
 
           <div className="status-buttons order-link-statuses">
+            <a className="secondary-btn small-btn phone-action-btn" href={phoneHref(order.phone)}>
+              Appeler
+            </a>
+
             {statuses.map((status) => (
               <button
                 key={status}

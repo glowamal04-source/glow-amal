@@ -24,6 +24,8 @@ const initialForm = {
   imageUrls: ''
 };
 
+const phoneHref = (phone) => `tel:${String(phone || '').replace(/[^\d+]/g, '')}`;
+
 function AdminDashboard() {
   const location = useLocation();
   const [products, setProducts] = useState([]);
@@ -400,7 +402,13 @@ function AdminDashboard() {
                   <div>
                     <strong>{order.customerName}</strong>
                     <p className="order-id-line">Commande: {order.id}</p>
-                    <p>{order.phone} - {order.city}</p>
+                    <p>
+                      <a className="phone-call-link" href={phoneHref(order.phone)}>
+                        {order.phone}
+                      </a>
+                      {' - '}
+                      {order.city}
+                    </p>
                     <p>{order.address}</p>
                     <p>Total : {Number(order.total).toFixed(2)} DH</p>
                     <p>
