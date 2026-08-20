@@ -1,21 +1,69 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-const ADMIN_PASSWORD = 'Glow.Admin_1';
+import React, { useEffect, useState } from 'react';
+import {
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailLink
+} from 'firebase/auth';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { auth } from '../firebase';
 
 function AdminGate() {
-  const [password, setPassword] = useState('');
+  const location = useLocation();
+  const [email, setEmail] = useState(localStorage.getItem('admin_email') || '');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const redirectPath = new URLSearchParams(location.search).get('redirect') || '/admin';
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const finishEmailLogin = async () => {
+      if (!isSignInWithEmailLink(auth, window.location.href)) return;
+
+      const savedEmail = localStorage.getItem('admin_email');
+      const loginEmail = savedEmail || window.prompt('Email admin:');
+
+      if (!loginEmail) {
+        setMessage('Email requis pour terminer la connexion.');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        await signInWithEmailLink(auth, loginEmail, window.location.href);
+        localStorage.setItem('admin_email', loginEmail);
+        navigate(redirectPath, { replace: true });
+      } catch (error) {
+        console.error(error);
+        setMessage('Lien invalide ou expiré. Demandez un nouveau lien.');
+      }
+
+      setLoading(false);
+    };
+
+    finishEmailLogin();
+  }, [navigate, redirectPath]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage('');
 
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem('admin_access', 'true');
-      navigate('/admin');
-    } else {
-      alert('Mot de passe incorrect');
+    const actionCodeSettings = {
+      url: `${window.location.origin}/admin-login?redirect=${encodeURIComponent(redirectPath)}`,
+      handleCodeInApp: true
+    };
+
+    try {
+      await sendSignInLinkToEmail(auth, email.trim(), actionCodeSettings);
+      localStorage.setItem('admin_email', email.trim());
+      setMessage('Lien de connexion envoyé. Ouvrez votre email admin.');
+    } catch (error) {
+      console.error(error);
+      setMessage(error.message || 'Erreur lors de l’envoi du lien.');
     }
+
+    setLoading(false);
   };
 
   return (
@@ -26,17 +74,19 @@ function AdminGate() {
           <h1>Connexion admin</h1>
 
           <div className="form-group">
-            <label>Mot de passe</label>
+            <label>Email admin</label>
             <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-          <button className="primary-btn">
-            Entrer
+          {message && <p className="admin-login-message">{message}</p>}
+
+          <button className="primary-btn" disabled={loading}>
+            {loading ? 'Envoi...' : 'Recevoir le lien'}
           </button>
         </form>
       </div>

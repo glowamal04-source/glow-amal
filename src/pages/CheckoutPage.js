@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { collection, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import Swal from 'sweetalert2';
-import { db } from '../firebase';
 import { useCart } from '../context/CartContext';
 
 function CheckoutPage() {
@@ -54,65 +52,29 @@ function CheckoutPage() {
     setLoading(true);
 
     try {
-      await runTransaction(db, async (transaction) => {
-        const productDocs = [];
-
-        for (const item of cartItems) {
-          const productRef = doc(db, 'products', item.id);
-          const productSnap = await transaction.get(productRef);
-
-          if (!productSnap.exists()) {
-            throw new Error(`Produit introuvable: ${item.title}`);
-          }
-
-          productDocs.push({
-            ref: productRef,
-            snap: productSnap,
-            item
-          });
-        }
-
-        for (const productDoc of productDocs) {
-          const data = productDoc.snap.data();
-          const currentStock = Number(data.stock) || 0;
-
-          if (productDoc.item.quantity > currentStock) {
-            throw new Error(
-              `Stock insuffisant pour "${productDoc.item.title}". Stock disponible: ${currentStock}`
-            );
-          }
-        }
-
-        for (const productDoc of productDocs) {
-          const data = productDoc.snap.data();
-          const currentStock = Number(data.stock) || 0;
-          const newStock = currentStock - productDoc.item.quantity;
-
-          transaction.update(productDoc.ref, {
-            stock: newStock
-          });
-        }
-
-        const orderRef = doc(collection(db, 'orders'));
-        transaction.set(orderRef, {
+      const response = await fetch('/.netlify/functions/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           customerName: form.customerName,
           phone: form.phone,
           city: form.city,
           address: form.address,
           items: cartItems.map((item) => ({
             id: item.id,
-            title: item.title,
             quantity: item.quantity,
-            price: item.price,
             selectedPack: item.selectedPack || ''
-          })),
-          subtotal,
-          shipping,
-          total,
-          status: 'Nouvelle',
-          createdAt: serverTimestamp()
-        });
+          }))
+        })
       });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la commande');
+      }
 
       clearCart();
 

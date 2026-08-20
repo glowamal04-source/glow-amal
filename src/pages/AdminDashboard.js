@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   addDoc,
   collection,
@@ -24,12 +25,15 @@ const initialForm = {
 };
 
 function AdminDashboard() {
+  const location = useLocation();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const ordersRef = useRef(null);
+  const orderRefs = useRef({});
+  const selectedOrderId = new URLSearchParams(location.search).get('order');
 
   const fetchProducts = async () => {
     const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
@@ -47,6 +51,13 @@ function AdminDashboard() {
     fetchProducts();
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    if (!selectedOrderId || orders.length === 0) return;
+
+    const selectedOrder = orderRefs.current[selectedOrderId];
+    selectedOrder?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [orders, selectedOrderId]);
 
   const scrollToOrders = () => {
     ordersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -375,9 +386,20 @@ function AdminDashboard() {
               <p>Aucune commande pour le moment.</p>
             ) : (
               orders.map((order) => (
-                <div className="order-card" key={order.id}>
+                <div
+                  className={`order-card ${selectedOrderId === order.id ? 'order-card-highlight' : ''}`}
+                  key={order.id}
+                  ref={(el) => {
+                    if (el) {
+                      orderRefs.current[order.id] = el;
+                    } else {
+                      delete orderRefs.current[order.id];
+                    }
+                  }}
+                >
                   <div>
                     <strong>{order.customerName}</strong>
+                    <p className="order-id-line">Commande: {order.id}</p>
                     <p>{order.phone} - {order.city}</p>
                     <p>{order.address}</p>
                     <p>Total : {Number(order.total).toFixed(2)} DH</p>

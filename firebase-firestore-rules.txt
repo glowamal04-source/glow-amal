@@ -16,8 +16,7 @@ service cloud.firestore {
     }
 
     match /orders/{orderId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, create, update, delete: if isAdmin();
     }
 
     match /admins/{adminId} {
