@@ -300,6 +300,41 @@ button { cursor: pointer; border: none; }
   margin: 0 0 16px;
 }
 
+.order-link-card h1 {
+  overflow-wrap: anywhere;
+}
+
+.order-link-summary {
+  margin: 18px 0;
+  box-shadow: none;
+}
+
+.order-link-summary p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.order-link-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 18px 0;
+  list-style: none;
+}
+
+.order-link-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.order-link-statuses {
+  margin-top: 18px;
+}
+
 .footer {
   margin-top: 30px;
   padding: 30px 0;

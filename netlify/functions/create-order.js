@@ -110,6 +110,8 @@ const escapeHtml = (value) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
 const firestoreRequest = async (path, accessToken, options = {}) => {
   const response = await fetch(
     `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/${DATABASE_ID}/documents${path}`,
@@ -131,7 +133,7 @@ const firestoreRequest = async (path, accessToken, options = {}) => {
   return response.json();
 };
 
-const sendNotificationEmail = async ({ orderId, order, items }) => {
+const sendNotificationEmail = async ({ orderId, order, items, orderAccessToken }) => {
   const resendApiKey = process.env.RESEND_API_KEY;
   const adminEmail = process.env.ADMIN_EMAIL;
   const fromEmail = process.env.FROM_EMAIL || 'Glow by Amal <onboarding@resend.dev>';
@@ -141,7 +143,7 @@ const sendNotificationEmail = async ({ orderId, order, items }) => {
     return;
   }
 
-  const orderUrl = `${siteUrl}/admin?order=${encodeURIComponent(orderId)}`;
+  const orderUrl = `${siteUrl}/commande?order=${encodeURIComponent(orderId)}&token=${encodeURIComponent(orderAccessToken)}`;
   const itemLines = items
     .map((item) => `<li>${escapeHtml(item.title)} x ${item.quantity}</li>`)
     .join('');
@@ -267,6 +269,7 @@ exports.handler = async (event) => {
   const shipping = orderItems.length ? SHIPPING_PRICE : 0;
   const total = subtotal + shipping;
   const orderId = crypto.randomUUID();
+  const orderAccessToken = crypto.randomBytes(32).toString('base64url');
   const order = {
     customerName: sanitizeText(payload.customerName, 120),
     phone: sanitizeText(payload.phone, 60),
@@ -276,6 +279,7 @@ exports.handler = async (event) => {
     subtotal,
     shipping,
     total,
+    orderAccessTokenHash: hashToken(orderAccessToken),
     status: 'Nouvelle'
   };
 
@@ -322,7 +326,7 @@ exports.handler = async (event) => {
     })
   });
 
-  await sendNotificationEmail({ orderId, order, items: orderItems });
+  await sendNotificationEmail({ orderId, order, items: orderItems, orderAccessToken });
 
   return json(200, { ok: true, orderId });
 };
