@@ -8,7 +8,8 @@ import {
   Heart,
   ShoppingBag,
   ArrowUpRight,
-  Camera
+  Camera,
+  MessageCircle
 } from 'lucide-react';
 
 function Footer() {
@@ -77,7 +78,17 @@ function Footer() {
               <span>@amal_a_gloow</span>
               <ArrowUpRight size={15} />
             </a>
-
+            
+<a
+  href="https://wa.me/212625882179"
+  target="_blank"
+  rel="noreferrer"
+  className="footer-contact-item"
+>
+  <MessageCircle size={18} />
+  <span>0625882179</span>
+  <ArrowUpRight size={15} />
+</a>
             <a
               href="mailto:amal.ayoub081217aa@gmail.com"
               className="footer-contact-item"
