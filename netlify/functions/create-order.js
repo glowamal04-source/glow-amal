@@ -209,6 +209,9 @@ exports.handler = async (event) => {
   if (safeItems.some((item) => !/^[A-Za-z0-9_-]+$/.test(item.id))) {
     return json(400, { error: 'Article invalide' });
   }
+  if (new Set(safeItems.map(item => item.id)).size !== safeItems.length) {
+    return json(400, { error: 'Articles en double dans le panier' });
+  }
 
   const accessToken = await getAccessToken();
   const transactionResponse = await firestoreRequest(':beginTransaction', accessToken, {
@@ -219,19 +222,25 @@ exports.handler = async (event) => {
   const productPaths = safeItems.map(
     (item) => `projects/${PROJECT_ID}/databases/${DATABASE_ID}/documents/products/${item.id}`
   );
+  const promoCode = sanitizeText(payload.promoCode, 40).toUpperCase();
+  if (promoCode && !/^[A-Z0-9_-]+$/.test(promoCode)) return json(400, { error: 'Code promo invalide' });
+  const promoPath = promoCode ? `projects/${PROJECT_ID}/databases/${DATABASE_ID}/documents/promoCodes/${promoCode}` : null;
 
   const productResponse = await firestoreRequest(':batchGet', accessToken, {
     method: 'POST',
     body: JSON.stringify({
-      documents: productPaths,
+      documents: promoPath ? [...productPaths, promoPath] : productPaths,
       transaction
     })
   });
 
   const productsById = new Map();
+  let promoDocument = null;
 
   for (const productResult of productResponse) {
     if (!productResult.found) continue;
+
+    if (productResult.found.name === promoPath) { promoDocument = productResult.found; continue; }
 
     const id = productResult.found.name.split('/').pop();
     productsById.set(id, productResult.found);
@@ -266,8 +275,11 @@ exports.handler = async (event) => {
     });
   }
 
-  const shipping = orderItems.length ? SHIPPING_PRICE : 0;
-  const total = subtotal + shipping;
+  const percentage = promoDocument ? readNumber(promoDocument.fields?.percentage) : 0;
+  if (promoCode && (!promoDocument || !promoDocument.fields?.active?.booleanValue || percentage <= 0 || percentage > 100)) return json(400, { error: 'Code promo invalide ou expiré' });
+  const shipping = orderItems.some(item => productsById.get(item.id).fields?.freeShipping?.booleanValue === true) ? 0 : SHIPPING_PRICE;
+  const discount = Math.round(subtotal * percentage) / 100;
+  const total = subtotal + shipping - discount;
   const orderId = crypto.randomUUID();
   const orderAccessToken = crypto.randomBytes(32).toString('base64url');
   const order = {
@@ -278,6 +290,9 @@ exports.handler = async (event) => {
     items: orderItems,
     subtotal,
     shipping,
+    promoCode,
+    discountPercent: percentage,
+    discount,
     total,
     orderAccessTokenHash: hashToken(orderAccessToken),
     status: 'Nouvelle'

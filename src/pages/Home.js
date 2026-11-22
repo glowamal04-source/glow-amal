@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from '../storefrontData';
 import { Sparkles } from 'lucide-react';
 import { db } from '../firebase';
 import ProductCard from '../components/ProductCard';
 import heroImage from '../assets/hero-section.jpeg';
+import Avis from './Avis';
+import About from './About';
 
 const glowFaqs = [
   {
@@ -41,16 +43,31 @@ const glowFaqs = [
   }
 ];
 
+function Carousel({ items }) {
+  const track = useRef(null);
+  const lastInteraction = useRef(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const el = track.current;
+      if (!el || el.matches(':hover') || document.hidden || Date.now() - lastInteraction.current < 6000 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 4) el.scrollTo({ left: 0, behavior: 'smooth' });
+      else el.scrollBy({ left: el.firstElementChild?.offsetWidth + 12 || 180, behavior: 'smooth' });
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+  return <div className="glow-carousel" ref={track} tabIndex="0" aria-label="Défiler les articles" onPointerDown={() => { lastInteraction.current = Date.now(); }} onKeyDown={() => { lastInteraction.current = Date.now(); }}>{items.map(item => <ProductCard key={item.id} product={item} />)}</div>;
+}
+
 function Home() {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState(null);
+  const [settings, setSettings] = useState({});
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
-        const q = query(collection(db, 'products'), where('featured', '==', true));
-        const snap = await getDocs(q);
+        const snap = await getDocs(collection(db, 'products'));
         const items = snap.docs.map((doc) => ({
           id: doc.id,
           ...doc.data()
@@ -64,20 +81,26 @@ function Home() {
     };
 
     fetchFeaturedProducts();
+    getDoc(doc(db, 'settings', 'storefront')).then(snapshot => { if (snapshot.exists()) setSettings(snapshot.data()); }).catch(console.error);
   }, []);
 
   const featuredPacks = useMemo(
-    () => featured.filter((item) => item.type === 'pack').slice(0, 2),
+    () => featured.filter((item) => item.type === 'pack'),
     [featured]
   );
 
   return (
     <>
       <section className="home-hero-only">
-        <img src={heroImage} alt="Gloow by Amal" />
+        <img src={settings.heroImage || heroImage} alt="Gloow by Amal" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = heroImage; }} />
       </section>
 
-      <section className="section">
+      {settings.essentialPackId && featured.find(item => item.id === settings.essentialPackId && item.type === 'pack') && (() => {
+        const pack = featured.find(item => item.id === settings.essentialPackId);
+        return <section className="essential-offer"><div className="essential-copy"><p className="eyebrow">Une offre à découvrir</p><h2>{settings.essentialTitle || pack.title}</h2><p className="essential-promo-text">{settings.essentialText}</p><Link className="primary-btn" to={`/products/${pack.id}`}>{settings.essentialButton || 'Découvrir le pack'}</Link></div><div className="essential-image"><img src={pack.images?.[0]} alt={pack.title} /></div></section>;
+      })()}
+
+      <section className="section" id="produits">
         <div className="container">
           <div className="section-head">
             <div>
@@ -85,26 +108,19 @@ function Home() {
               <h2>Meilleurs Produits</h2>
             </div>
 
-            <Link to="/catalogue" className="text-link">
-              Tout voir
-            </Link>
           </div>
 
           {loading ? (
             <p>Chargement...</p>
-          ) : featured.length ? (
-            <div className="products-grid sahar-products-grid">
-              {featured.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+          ) : featured.some(item => item.type !== 'pack') ? (
+            <Carousel items={featured.filter(item => item.type !== 'pack')} />
           ) : (
             <p>Aucun produit ou pack en avant pour le moment.</p>
           )}
         </div>
       </section>
 
-      <section className="section home-packs-section">
+      <section className="section home-packs-section" id="packs">
         <div className="container">
           <div className="section-head">
             <div>
@@ -112,25 +128,21 @@ function Home() {
               <h2>Packs Glow</h2>
             </div>
 
-            <Link to="/packs" className="text-link">
-              Voir tout
-            </Link>
           </div>
 
           {loading ? (
             <p>Chargement...</p>
           ) : featuredPacks.length ? (
-            <div className="products-grid home-packs-grid">
-              {featuredPacks.map((pack) => (
-                <ProductCard key={pack.id} product={pack} />
-              ))}
-            </div>
+            <Carousel items={featuredPacks} />
           ) : (
             <p>Aucun pack mis en avant pour le moment.</p>
           )}
         </div>
       </section>
 
+      {settings.beforeImage && settings.afterImage && <section className="section results-section"><div className="container"><p className="eyebrow">Vos résultats</p><h2>Avant & après</h2><p>La beauté de vos routines, en images.</p><div className="results-grid"><figure><img src={settings.beforeImage} alt="Avant" /><figcaption>Avant</figcaption></figure><figure><img src={settings.afterImage} alt="Après" /><figcaption>Après</figcaption></figure></div></div></section>}
+      <Avis />
+      <About />
       <section className="section glow-faq-section">
         <div className="container">
           <div className="faq-hero">

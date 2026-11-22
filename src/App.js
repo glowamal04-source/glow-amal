@@ -21,6 +21,7 @@ function App() {
 
   return (
     <>
+      {process.env.REACT_APP_LOCAL_PREVIEW === 'true' && <div style={{ background: '#bd5d7e', color: 'white', textAlign: 'center', padding: '8px', fontSize: '13px' }}>Mode test local · Données et commandes fictives</div>}
       <Header cartCount={cartCount} />
       <ScrollToTop/>
       <Routes>

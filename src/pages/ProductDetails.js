@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from '../storefrontData';
 import { useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { db } from '../firebase';
@@ -28,7 +28,7 @@ function ProductDetails() {
           icon: 'error',
           title: 'Erreur',
           text: 'Impossible de charger cet article.',
-          confirmButtonColor: '#b76e79'
+          confirmButtonColor: '#d45f86'
         });
       } finally {
         setLoading(false);
@@ -60,7 +60,7 @@ function ProductDetails() {
         icon: 'warning',
         title: 'Rupture de stock',
         text: isPack ? 'Ce pack n’est plus disponible.' : 'Ce produit n’est plus disponible.',
-        confirmButtonColor: '#b76e79'
+        confirmButtonColor: '#d45f86'
       });
       return;
     }
@@ -72,7 +72,7 @@ function ProductDetails() {
       icon: 'success',
       title: isPack ? 'Pack ajouté' : 'Produit ajouté',
       text: isPack ? 'Le pack a été ajouté au panier.' : 'Le produit a été ajouté au panier.',
-      confirmButtonColor: '#b76e79',
+      confirmButtonColor: '#d45f86',
       timer: 1400,
       showConfirmButton: false
     });

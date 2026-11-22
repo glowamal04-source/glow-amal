@@ -1,27 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
     match /products/{productId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if false;
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /promoCodes/{code} {
+      allow get: if true;
+      allow list, write: if false;
     }
 
     match /orders/{orderId} {
-      allow read, create, update, delete: if isAdmin();
+      allow read, write: if false;
     }
 
     match /admins/{adminId} {
-      allow read: if isAdmin();
-      allow create, update, delete: if isAdmin();
+      allow read, write: if false;
     }
   }
 }
