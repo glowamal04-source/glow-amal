@@ -67,7 +67,7 @@ function OrderLinkPage() {
         icon: 'error',
         title: 'Erreur',
         text: updateError.message,
-        confirmButtonColor: '#b76e79'
+        confirmButtonColor: '#d45f86'
       });
     }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from '../storefrontData';
 import { Search } from 'lucide-react';
 import { db } from '../firebase';
 import ProductCard from '../components/ProductCard';

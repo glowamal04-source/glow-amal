@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 
 function ProductCard({ product }) {
+  const { addToCart } = useCart();
   const price = Number(product.price) || 0;
   const oldPrice = Number(product.oldPrice) || 0;
   const hasPromo = oldPrice > price;
@@ -30,9 +32,8 @@ function ProductCard({ product }) {
           {hasPromo && <span>{oldPrice.toFixed(2)} DH</span>}
         </div>
 
-        <p className={`stock-badge ${product.stock > 0 ? 'in-stock' : 'out-stock'}`}>
-          {product.stock > 0 ? 'En stock' : 'Rupture de stock'}
-        </p>
+        {!(product.stock > 0) && <p className="stock-badge out-stock">Rupture de stock</p>}
+        <button type="button" className="card-add-btn" disabled={!(product.stock > 0)} onClick={() => addToCart(product)}>Ajouter au panier +</button>
       </div>
     </div>
   );

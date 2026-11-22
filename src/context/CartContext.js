@@ -42,7 +42,8 @@ export function CartProvider({ children }) {
           price: Number(product.price) || 0,
           image: product.images?.[0] || '',
           quantity: Math.min(quantity, stock),
-          stock
+          stock,
+          freeShipping: !!product.freeShipping
         }
       ];
     });
@@ -83,7 +84,7 @@ export function CartProvider({ children }) {
     return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   }, [cartItems]);
 
-  const shipping = cartItems.length ? 40 : 0;
+  const shipping = cartItems.length && !cartItems.some((item) => item.freeShipping) ? 40 : 0;
   const total = subtotal + shipping;
 
   return (

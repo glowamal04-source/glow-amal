@@ -23,7 +23,7 @@ function CartPage() {
         icon: 'warning',
         title: 'Quantité invalide',
         text: 'La quantité minimum est 1.',
-        confirmButtonColor: '#b76e79'
+        confirmButtonColor: '#d45f86'
       });
       return;
     }
@@ -35,7 +35,7 @@ function CartPage() {
         icon: 'warning',
         title: 'Stock limité',
         text: `La quantité maximum disponible est ${item.stock}.`,
-        confirmButtonColor: '#b76e79'
+        confirmButtonColor: '#d45f86'
       });
       return;
     }
@@ -49,7 +49,7 @@ function CartPage() {
       text: 'Le produit sera retiré du panier.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#b76e79',
+      confirmButtonColor: '#d45f86',
       cancelButtonColor: '#aaa',
       confirmButtonText: 'Oui, supprimer',
       cancelButtonText: 'Annuler'
@@ -103,6 +103,7 @@ function CartPage() {
                     min="1"
                     max={item.stock}
                     value={item.quantity}
+                    aria-label={`Quantité pour ${item.title}`}
                     onChange={(e) => handleQtyChange(item, e.target.value)}
                     className="qty-input"
                   />

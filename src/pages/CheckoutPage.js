@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import { useCart } from '../context/CartContext';
+import { doc, getDoc } from '../storefrontData';
+import { db } from '../firebase';
 
 function CheckoutPage() {
   const { cartItems, subtotal, shipping, total, clearCart } = useCart();
@@ -13,6 +15,15 @@ function CheckoutPage() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [promoMessage, setPromoMessage] = useState('');
+  const discount = Math.round(subtotal * discountPercent) / 100;
+  const applyPromo = async () => {
+    const code = promoCode.trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{1,40}$/.test(code)) { setDiscountPercent(0); setPromoMessage('Code invalide.'); return; }
+    try { const snap = await getDoc(doc(db, 'promoCodes', code)); const data = snap.data(); if (!snap.exists() || !data.active || !(data.percentage > 0 && data.percentage <= 100)) { setDiscountPercent(0); setPromoMessage('Code invalide ou expiré.'); return; } setPromoCode(code); setDiscountPercent(Number(data.percentage)); setPromoMessage(`Réduction de ${data.percentage}% appliquée.`); } catch (_) { setPromoMessage('Impossible de vérifier le code.'); setDiscountPercent(0); }
+  };
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -29,7 +40,7 @@ function CheckoutPage() {
         icon: 'warning',
         title: 'Panier vide',
         text: 'Le panier est vide.',
-        confirmButtonColor: '#b76e79'
+        confirmButtonColor: '#d45f86'
       });
       return;
     }
@@ -39,7 +50,7 @@ function CheckoutPage() {
       text: 'Voulez-vous vraiment valider cette commande ?',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#b76e79',
+      confirmButtonColor: '#d45f86',
       cancelButtonColor: '#aaa',
       confirmButtonText: 'Oui, confirmer',
       cancelButtonText: 'Annuler'
@@ -62,6 +73,7 @@ function CheckoutPage() {
           phone: form.phone,
           city: form.city,
           address: form.address,
+          promoCode: discountPercent ? promoCode : '',
           items: cartItems.map((item) => ({
             id: item.id,
             quantity: item.quantity,
@@ -80,9 +92,9 @@ function CheckoutPage() {
 
       await Swal.fire({
         icon: 'success',
-        title: 'Commande confirmée',
-        text: 'Votre commande a été enregistrée avec succès !',
-        confirmButtonColor: '#b76e79'
+        title: result.preview ? 'Commande de test' : 'Commande confirmée',
+        text: result.preview ? 'Simulation uniquement : aucune commande réelle n’a été envoyée.' : 'Votre commande a été enregistrée avec succès !',
+        confirmButtonColor: '#d45f86'
       });
 
       window.location.href = '/';
@@ -93,7 +105,7 @@ function CheckoutPage() {
         icon: 'error',
         title: 'Erreur',
         text: error.message || 'Erreur lors de la commande',
-        confirmButtonColor: '#b76e79'
+        confirmButtonColor: '#d45f86'
       });
     }
 
@@ -150,6 +162,7 @@ function CheckoutPage() {
             />
           </div>
 
+          <div className="form-group"><label htmlFor="promo-code">Code promo</label><div className="promo-input"><input id="promo-code" value={promoCode} onChange={e => { setPromoCode(e.target.value); setDiscountPercent(0); setPromoMessage(''); }} /><button type="button" className="secondary-btn" onClick={applyPromo}>Appliquer</button></div>{promoMessage && <p role="status">{promoMessage}</p>}</div>
           <div className="summary-box" style={{ marginTop: '20px' }}>
             <div className="summary-line">
               <span>Sous-total</span>
@@ -161,8 +174,9 @@ function CheckoutPage() {
             </div>
             <div className="summary-line total-line">
               <span>Total</span>
-              <strong>{total.toFixed(2)} DH</strong>
+              <strong>{(total - discount).toFixed(2)} DH</strong>
             </div>
+            {discountPercent > 0 && <div className="summary-line"><span>Réduction ({discountPercent}%)</span><strong>−{discount.toFixed(2)} DH</strong></div>}
           </div>
 
           <button className="primary-btn full-btn" disabled={loading}>
