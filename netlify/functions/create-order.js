@@ -341,7 +341,13 @@ exports.handler = async (event) => {
     })
   });
 
-  await sendNotificationEmail({ orderId, order, items: orderItems, orderAccessToken });
+  try {
+    await sendNotificationEmail({ orderId, order, items: orderItems, orderAccessToken });
+  } catch (error) {
+    // The order is already committed. An email outage must not make checkout
+    // appear to fail and prompt the customer to place a duplicate order.
+    console.error('Order notification failed:', error.message);
+  }
 
   return json(200, { ok: true, orderId });
 };
