@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, doc, getDoc, getDocs } from '../storefrontData';
+import { collection, getDocs } from '../storefrontData';
 import { Sparkles } from 'lucide-react';
 import { db } from '../firebase';
 import ProductCard from '../components/ProductCard';
 import heroImage from '../assets/hero-section.jpeg';
 import Avis from './Avis';
 import About from './About';
+import { useStorefront } from '../context/StorefrontContext';
 
 const glowFaqs = [
   {
@@ -62,7 +63,7 @@ function Home() {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState(null);
-  const [settings, setSettings] = useState({});
+  const { settings, loading: settingsLoading, error: settingsError, retry } = useStorefront();
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -81,13 +82,15 @@ function Home() {
     };
 
     fetchFeaturedProducts();
-    getDoc(doc(db, 'settings', 'storefront')).then(snapshot => { if (snapshot.exists()) setSettings(snapshot.data()); }).catch(console.error);
   }, []);
 
   const featuredPacks = useMemo(
     () => featured.filter((item) => item.type === 'pack'),
     [featured]
   );
+
+  if (settingsError) return <section className="section"><div className="container storefront-error" role="alert"><p>Impossible de charger la boutique. Vérifiez votre connexion puis réessayez.</p><button type="button" className="primary-btn" onClick={retry}>Réessayer</button></div></section>;
+  if (settingsLoading || loading) return <div className="storefront-loading" role="status" aria-live="polite"><span>Chargement de la boutique...</span><div className="storefront-loading-banner" aria-hidden="true" /></div>;
 
   return (
     <>
