@@ -3393,3 +3393,13 @@ html, body, #root, .app-shell, .main-content,
 .home-hero-only, .home-packs-section, .glow-faq-section, .avis-page, .results-section {
   background: #fff !important;
 }
+
+/* Neutral placeholders while the current storefront settings load. */
+.storefront-pending { visibility: hidden; }
+.storefront-logo-placeholder { display: block; background: #f9e5eb !important; border: 0 !important; }
+.storefront-loading { min-height: 55vh; padding: 24px 0 48px; background: #fff; }
+.storefront-loading > span { display: block; margin: 0 auto 16px; padding: 0 20px; max-width: 1200px; color: #80405e; font-size: 14px; }
+.storefront-loading-banner { width: 100%; height: clamp(220px, 35vw, 460px); background: linear-gradient(100deg, #fae8ed 25%, #fff6f8 50%, #fae8ed 75%); background-size: 200% 100%; animation: storefront-loading-shimmer 1.6s ease-in-out infinite; }
+.storefront-error { padding-top: 32px; padding-bottom: 32px; text-align: center; }
+@keyframes storefront-loading-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .storefront-loading-banner { animation: none; } }
